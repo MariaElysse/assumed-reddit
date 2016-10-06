@@ -70,7 +70,7 @@ def initial_collect(pat, metabots):
             # guards against trying to load deleted comments, and loading comments from metabots that quote
             if comment.body and comment.author and pat.search(comment.body) and \
                             comment.author.name.lower() not in metabots:  # we found the "joke" in the comment
-                logging.info("Comment found in /r/{} : id ".format(comment.subreddit.display_name, comment.id))
+                logging.info("Comment found in /r/{} : id {}".format(comment.subreddit.display_name, comment.id))
                 commdata = {
                     "_id": comment.id,
                     "author": comment.author.name,
