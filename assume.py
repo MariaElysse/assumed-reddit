@@ -1,13 +1,16 @@
 #!/usr/bin/env python3.5
-from multiprocessing import Process
-from pymongo import MongoClient
-import praw
-import datetime, time
-import re
+import datetime
 import logging
+import re
+import time
+from multiprocessing import Process
+
+import praw
+from pymongo import MongoClient
+
 user_agent = "python-praw:assumed-gender-stat-collector:v0.1 (by /u/jerenept)"
-pat = pattern = re.compile(r"did (.+){1,3} just assume .*", re.IGNORECASE)   # ...did [1-3 words] just assume [word]...
-metareddits = ("subredditdrama", "bestof", "worstof", "shitredditsays", )  # as I discover other erroneous entries I add
+pat = pattern = re.compile(r"did (.+){1,3} just assume .*", re.IGNORECASE)  # ...did [1-3 words] just assume [word]...
+metareddits = ("subredditdrama", "bestof", "worstof", "shitredditsays",)  # as I discover other erroneous entries I add
 # also I don't know if excluding metas is the right idea... I'll leave this here but comment it
 metabots = ("srscreenshot", "ttumblrbots", "totesmessenger", "snapshillbot")
 logging.basicConfig(level=logging.INFO)
@@ -30,7 +33,7 @@ def main():
             for x in range(0, 3):
                 if not collector_processes[x].is_alive():
                     logging.warning("Process {} has died. Restarting.".format(x))
-                    collector_processes[x]=Process(target=initial_collect, args=(pat, metabots,))
+                    collector_processes[x] = Process(target=initial_collect, args=(pat, metabots,))
                     collector_processes[x].start()
                     logging.info("Process {} restarted".format(x))
             if not updater_process.is_alive():
@@ -57,13 +60,13 @@ def initial_collect(pat, metabots):
 
     while True:  # forever
         try:
-            all_comments = reddit.get_comments("all", limit=200) # get as many comments as we can in a single call
+            all_comments = reddit.get_comments("all", limit=200)  # get as many comments as we can in a single call
         except praw.errors.RateLimitExceeded as rle:
             logging.error("Rate-Limited by reddit API. Sleeping for {} seconds".format(rle.sleep_time))
             time.sleep(rle.sleep_time)
             continue
         for comment in all_comments:
-            #guards against trying to load deleted comments, and loading comments from metabots that quote
+            # guards against trying to load deleted comments, and loading comments from metabots that quote
             if comment.body and comment.author and pat.search(comment.body) and \
                             comment.author.name.lower() not in metabots:  # we found the "joke" in the comment
                 logging.info("Comment found in /r/{} : id ".format(comment.subreddit.display_name, comment.id))
@@ -96,8 +99,8 @@ def update():
         for comment in comment_store.find(
                 {
                     "datetime": {
-                            "$lt": datetime.datetime.utcnow() - datetime.timedelta(hours=1),
-                        },
+                        "$lt": datetime.datetime.utcnow() - datetime.timedelta(hours=1),
+                    },
                     "karma_60": {
                         "$eq": None,
                     },
@@ -107,14 +110,14 @@ def update():
                 }):
             logging.info("Updating Comment id {}: 1 hour".format(comment['_id']))
             try:
-                updated_comment=reddit.get_submission(comment['permalink']).comments[0]
+                updated_comment = reddit.get_submission(comment['permalink']).comments[0]
             except praw.errors.NotFound:
-                comment.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
+                comment_store.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
                 continue
             if updated_comment.body:
-                comment.update({"_id": comment['_id']}, {"$set": {"karma_60": updated_comment.ups}})
+                comment_store.update({"_id": comment['_id']}, {"$set": {"karma_60": updated_comment.ups}})
             else:
-                comment.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
+                comment_store.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
 
         for comment in comment_store.find(
                 {
@@ -130,14 +133,14 @@ def update():
                 }):
             logging.info("Updating Comment id {}: 24 hours".format(comment['_id']))
             try:
-                updated_comment=reddit.get_submission(comment['permalink']).comments[0]
+                updated_comment = reddit.get_submission(comment['permalink']).comments[0]
             except praw.errors.NotFound:
-                comment.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
+                comment_store.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
                 continue
             if updated_comment.body:
-                comment.update({"_id": comment['_id']}, {"$set": {"karma_24h": updated_comment.ups}})
+                comment_store.update({"_id": comment['_id']}, {"$set": {"karma_24h": updated_comment.ups}})
             else:
-                comment.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
+                comment_store.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
 
 
 if __name__ == "__main__":
