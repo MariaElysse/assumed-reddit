@@ -7,6 +7,7 @@ from multiprocessing import Process
 
 import praw
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 
 user_agent = "python-praw:assumed-gender-stat-collector:v0.1 (by /u/jerenept)"
 pat = pattern = re.compile(r"did (.+){1,3} just assume .*", re.IGNORECASE)  # ...did [1-3 words] just assume [word]...
@@ -82,7 +83,11 @@ def initial_collect(pat, metabots):
                     "permalink": comment.permalink,
                     "deleted": False,
                 }
-                comment_store.insert_one(commdata)
+                try:
+                    comment_store.insert_one(commdata)
+                except DuplicateKeyError:
+                    logging.debug("Already added id: {} to the database".format(comment.id))
+                    continue
                 logging.debug("Comment id:{} saved in database".format(comment.id))
 
 
