@@ -116,13 +116,13 @@ def update():
             logging.info("Updating Comment id {}: 1 hour".format(comment['_id']))
             try:
                 updated_comment = reddit.get_submission(comment['permalink']).comments[0]
-            except praw.errors.NotFound:
+            except (praw.errors.NotFound, IndexError):
                 comment_store.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
-                continue
-            if updated_comment.body:
-                comment_store.update({"_id": comment['_id']}, {"$set": {"karma_60": updated_comment.ups}})
             else:
-                comment_store.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
+                if updated_comment.body:
+                    comment_store.update({"_id": comment['_id']}, {"$set": {"karma_60": updated_comment.ups}})
+                else:
+                    comment_store.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
 
         for comment in comment_store.find(
                 {
