@@ -141,11 +141,11 @@ def update():
                 updated_comment = reddit.get_submission(comment['permalink']).comments[0]
             except (praw.errors.NotFound, IndexError):
                 comment_store.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
-                continue
-            if updated_comment.body:
-                comment_store.update({"_id": comment['_id']}, {"$set": {"karma_24h": updated_comment.ups}})
             else:
-                comment_store.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
+                if updated_comment.body:
+                    comment_store.update({"_id": comment['_id']}, {"$set": {"karma_24h": updated_comment.ups}})
+                else:
+                    comment_store.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
 
 
 if __name__ == "__main__":
