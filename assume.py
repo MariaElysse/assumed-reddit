@@ -123,6 +123,9 @@ def update():
                     comment_store.update({"_id": comment['_id']}, {"$set": {"karma_60": updated_comment.ups}})
                 else:
                     comment_store.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
+# TODO:
+# ./assume.py:120: DeprecationWarning: update is deprecated. Use replace_one, update_one or update_many instead.
+#  comment_store.update({"_id": comment['_id']}, {"$set": {"deleted": True}})
 
         for comment in comment_store.find(
                 {
