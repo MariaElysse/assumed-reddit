@@ -14,7 +14,7 @@ pat = pattern = re.compile(r"did (.+){1,3} just assume .*", re.IGNORECASE)  # ..
 metareddits = ("subredditdrama", "bestof", "worstof", "shitredditsays",)  # as I discover other erroneous entries I add
 # also I don't know if excluding metas is the right idea... I'll leave this here but comment it
 metabots = ("srscreenshot", "ttumblrbots", "totesmessenger", "snapshillbot")
-logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.INFO)
 
 
 def main():
